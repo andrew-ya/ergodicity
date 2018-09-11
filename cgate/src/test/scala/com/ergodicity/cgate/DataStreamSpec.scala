@@ -1,41 +1,43 @@
 package com.ergodicity.cgate
 
-import org.scalatest.{BeforeAndAfterAll, WordSpec}
+import org.scalatest.{BeforeAndAfterAll, WordSpec, WordSpecLike}
 import akka.event.Logging
-import akka.testkit.{TestFSMRef, ImplicitSender, TestKit}
+import akka.testkit.{ImplicitSender, TestFSMRef, TestKit}
 import akka.actor.ActorSystem
-import akka.actor.FSM.{Transition, CurrentState, SubscribeTransitionCallBack}
+import akka.actor.FSM.{CurrentState, SubscribeTransitionCallBack, Transition}
 import akka.pattern.ask
-import akka.util.duration._
+
+import scala.concurrent.duration._
 import java.nio.ByteBuffer
-import com.ergodicity.cgate.StreamEvent.{ReplState, ClearDeleted, LifeNumChanged, StreamData}
+
+import com.ergodicity.cgate.StreamEvent.{ClearDeleted, LifeNumChanged, ReplState, StreamData}
 import akka.util.Timeout
 import com.ergodicity.cgate.DataStream._
 
-class DataStreamSpec extends TestKit(ActorSystem("DataStreamSpec", AkkaConfigurations.ConfigWithDetailedLogging)) with WordSpec with BeforeAndAfterAll with ImplicitSender {
+class DataStreamSpec extends TestKit(ActorSystem("DataStreamSpec", AkkaConfigurations.ConfigWithDetailedLogging)) with WordSpecLike with BeforeAndAfterAll with ImplicitSender {
   val log = Logging(system, self)
 
   implicit val timeout = Timeout(1.second)
 
   override def afterAll() {
-    system.shutdown()
+    system.terminate()
   }
 
   "DataStream" must {
     "initialized in Closed state" in {
-      val dataStream = TestFSMRef(new DataStream, "DataStream")
+      val dataStream = TestFSMRef(new DataStream, "DataStream1")
       assert(dataStream.stateName == DataStreamState.Closed)
     }
 
     "subscribe events" in {
-      val dataStream = TestFSMRef(new DataStream, "DataStream")
+      val dataStream = TestFSMRef(new DataStream, "DataStream2")
       dataStream ! SubscribeStreamEvents(self)
 
       assert(dataStream.stateData.set.size == 1)
     }
 
     "follow Closed -> Opened -> Online -> Closed states" in {
-      val dataStream = TestFSMRef(new DataStream, "DataStream")
+      val dataStream = TestFSMRef(new DataStream, "DataStream3")
       assert(dataStream.stateName == DataStreamState.Closed)
 
       dataStream ! StreamEvent.Open
@@ -49,7 +51,7 @@ class DataStreamSpec extends TestKit(ActorSystem("DataStreamSpec", AkkaConfigura
     }
 
     "forward stream events" in {
-      val dataStream = TestFSMRef(new DataStream, "DataStream")
+      val dataStream = TestFSMRef(new DataStream, "DataStream4")
       dataStream ? SubscribeStreamEvents(self)
 
       dataStream ! StreamEvent.Open
@@ -74,7 +76,7 @@ class DataStreamSpec extends TestKit(ActorSystem("DataStreamSpec", AkkaConfigura
     }
     
     "forward stream data" in {
-      val dataStream = TestFSMRef(new DataStream, "DataStream")
+      val dataStream = TestFSMRef(new DataStream, "DataStream5")
       dataStream ? SubscribeStreamEvents(self)
 
       dataStream ! StreamEvent.Open
@@ -95,7 +97,7 @@ class DataStreamSpec extends TestKit(ActorSystem("DataStreamSpec", AkkaConfigura
     }
 
     "subscribe repl states" in {
-      val dataStream = TestFSMRef(new DataStream, "DataStream")
+      val dataStream = TestFSMRef(new DataStream, "DataStream6")
       dataStream ! SubscribeCloseEvent(self)
 
       dataStream ! StreamEvent.Open

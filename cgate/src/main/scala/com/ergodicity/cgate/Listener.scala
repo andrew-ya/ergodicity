@@ -2,12 +2,12 @@ package com.ergodicity.cgate
 
 import akka.actor.FSM.Failure
 import akka.actor.{Actor, FSM}
-import akka.util.Duration
-import akka.util.duration._
+import scala.concurrent.duration._
 import com.ergodicity.cgate.config.{ListenerConfig, ListenerOpenParams}
 import java.util.concurrent.atomic.AtomicReference
 import ru.micexrts.cgate.messages.Message
 import ru.micexrts.cgate.{Listener => CGListener, Connection => CGConnection, ISubscriber}
+import scala.concurrent.ExecutionContext.Implicits.global
 
 object ListenerBinding {
   def apply(f: ISubscriber => CGListener) = new ListenerBinding(f)
@@ -55,7 +55,7 @@ class Listener(underlying: CGListener, updateStateDuration: Option[Duration] = S
 
   private val statusTracker = updateStateDuration.map {
     duration =>
-      context.system.scheduler.schedule(duration, duration) {
+      context.system.scheduler.schedule(FiniteDuration(duration._1, duration._2), FiniteDuration(duration._1, duration._2)) {
         self ! UpdateState
       }
   }

@@ -1,27 +1,31 @@
 package integration.ergodicity.cgate
 
 import java.io.File
+
 import integration._
-import org.scalatest.{BeforeAndAfterAll, WordSpec}
+import org.scalatest.{BeforeAndAfterAll, WordSpec, WordSpecLike}
 import com.ergodicity.cgate.config.ConnectionConfig.Tcp
-import akka.actor.{Actor, Props, ActorSystem}
-import akka.actor.FSM.{Transition, SubscribeTransitionCallBack}
-import akka.util.duration._
+import akka.actor.{Actor, ActorSystem, Props}
+import akka.actor.FSM.{SubscribeTransitionCallBack, Transition}
+
+import scala.concurrent.duration._
 import com.ergodicity.cgate.Connection.StartMessageProcessing
 import com.ergodicity.cgate._
-import config.{Replication, CGateConfig}
+import config.{CGateConfig, Replication}
 import scheme.FutInfo
 import com.ergodicity.cgate.config.Replication._
-import akka.testkit.{TestActorRef, ImplicitSender, TestKit}
+import akka.testkit.{ImplicitSender, TestActorRef, TestKit}
 import akka.event.Logging
 import java.util.concurrent.TimeUnit
-import ru.micexrts.cgate.{P2TypeParser, CGate, Connection => CGConnection, Listener => CGListener}
+
+import ru.micexrts.cgate.{CGate, P2TypeParser, Connection => CGConnection, Listener => CGListener}
 import java.util.Date
+
 import com.ergodicity.cgate.DataStream.SubscribeStreamEvents
 import com.ergodicity.cgate.StreamEvent.StreamData
 
 
-class FutInfoIntegrationSpec extends TestKit(ActorSystem("FutInfoIntegrationSpec", ConfigWithDetailedLogging)) with ImplicitSender with WordSpec with BeforeAndAfterAll {
+class FutInfoIntegrationSpec extends TestKit(ActorSystem("FutInfoIntegrationSpec", ConfigWithDetailedLogging)) with ImplicitSender with WordSpecLike with BeforeAndAfterAll {
   val log = Logging(system, self)
 
   val Host = "localhost"
@@ -36,7 +40,7 @@ class FutInfoIntegrationSpec extends TestKit(ActorSystem("FutInfoIntegrationSpec
   }
 
   override def afterAll() {
-    system.shutdown()
+    system.terminate()
     CGate.close()
   }
 
@@ -142,7 +146,7 @@ class FutInfoIntegrationSpec extends TestKit(ActorSystem("FutInfoIntegrationSpec
 
       // On connection Activated open listeners etc
       connection ! SubscribeTransitionCallBack(system.actorOf(Props(new Actor {
-        protected def receive = {
+        def receive = {
           case Transition(_, _, Active) =>
             // Open Listener in Combined mode
             listener ! Listener.Open(ReplicationParams(ReplicationMode.Combined))

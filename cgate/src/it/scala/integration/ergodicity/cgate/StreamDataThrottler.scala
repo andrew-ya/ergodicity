@@ -1,17 +1,18 @@
 package integration.ergodicity.cgate
 
 import akka.actor.{Cancellable, ActorLogging, Actor}
-import akka.util.duration._
+import scala.concurrent.duration._
 import collection.mutable
 import com.ergodicity.cgate.StreamEvent.StreamData
-import akka.util.Duration
+import scala.concurrent.ExecutionContext.Implicits.global
+//import akka.util.Duration
 
 class StreamDataThrottler(size: Int, duration: Duration = 1.second) extends Actor with ActorLogging {
 
   private val counter = mutable.Map[Int, Int]()
   private val cancellable = mutable.Map[Int, Cancellable]()
 
-  protected def receive = {
+  def receive = {
     case data@StreamData(idx, _) if (incCounter(idx) < size) => handleData(data)
 
     case data@StreamData(idx, _) if (incCounter(idx) >= size) => // ignore
@@ -23,7 +24,7 @@ class StreamDataThrottler(size: Int, duration: Duration = 1.second) extends Acto
     val current = counter.getOrElseUpdate(id, 0)
     val next = current + 1
     counter(id) = next
-    cancellable.getOrElseUpdate(id, context.system.scheduler.schedule(0.millis, duration) {
+    cancellable.getOrElseUpdate(id, context.system.scheduler.schedule(FiniteDuration(0, MILLISECONDS), FiniteDuration(duration._1, duration._2)) {
       counter(id) = 0
     })
     next

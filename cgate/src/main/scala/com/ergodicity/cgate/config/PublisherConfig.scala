@@ -1,7 +1,9 @@
 package com.ergodicity.cgate.config
 
-import akka.util.Duration
+
 import java.io.File
+
+import scala.concurrent.duration.FiniteDuration
 
 sealed trait PublisherConfig {
   def config: String
@@ -9,7 +11,7 @@ sealed trait PublisherConfig {
   def apply(): String = config
 }
 
-case class FortsMessages(name: String, timeout: Duration, scheme: File, schemeName: String = "message") extends PublisherConfig {
+case class FortsMessages(name: String, timeout: FiniteDuration, scheme: File, schemeName: String = "message") extends PublisherConfig {
   if (!scheme.exists()) throw new IllegalStateException("Messages scheme fiel doesn't exists: " + scheme)
 
   val MsgType = "p2mq"

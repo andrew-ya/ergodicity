@@ -1,28 +1,33 @@
 package integration.ergodicity.cgate
 
 import java.io.File
+
 import integration._
-import org.scalatest.{BeforeAndAfterAll, WordSpec}
-import akka.actor.{Props, Actor, ActorSystem}
-import akka.util.duration._
+import org.scalatest.{BeforeAndAfterAll, WordSpec, WordSpecLike}
+import akka.actor.{Actor, ActorSystem, Props}
+
+import scala.concurrent.duration._
 import com.ergodicity.cgate._
 import config.ConnectionConfig.Tcp
 import akka.actor.FSM.Transition
 import akka.actor.FSM.SubscribeTransitionCallBack
 import com.ergodicity.cgate.Connection.StartMessageProcessing
-import config.{Replication, CGateConfig}
+import config.{CGateConfig, Replication}
 import scheme.OrdBook
 import com.ergodicity.cgate.config.Replication._
-import akka.testkit.{TestActorRef, ImplicitSender, TestKit}
+import akka.testkit.{ImplicitSender, TestActorRef, TestKit}
 import akka.event.Logging
 import java.util.concurrent.TimeUnit
-import ru.micexrts.cgate.{P2TypeParser, CGate, Connection => CGConnection, Listener => CGListener}
+
+import ru.micexrts.cgate.{CGate, P2TypeParser, Connection => CGConnection, Listener => CGListener}
 import akka.util.Timeout
 import com.ergodicity.cgate.DataStream.SubscribeStreamEvents
 import com.ergodicity.cgate.StreamEvent.StreamData
 import java.util.Date
 
-class FutOrderbookIntegrationSpec extends TestKit(ActorSystem("FutOrderBookIntegrationSpec", ConfigWithDetailedLogging)) with ImplicitSender with WordSpec with BeforeAndAfterAll {
+
+
+class FutOrderbookIntegrationSpec extends TestKit(ActorSystem("FutOrderBookIntegrationSpec", ConfigWithDetailedLogging)) with ImplicitSender with WordSpecLike with BeforeAndAfterAll {
   val log = Logging(system, self)
 
   val Host = "localhost"
@@ -39,7 +44,7 @@ class FutOrderbookIntegrationSpec extends TestKit(ActorSystem("FutOrderBookInteg
   }
 
   override def afterAll() {
-    system.shutdown()
+    system.terminate()
     CGate.close()
   }
 
@@ -52,7 +57,7 @@ class FutOrderbookIntegrationSpec extends TestKit(ActorSystem("FutOrderBookInteg
       val FutOrderBookDataStream = system.actorOf(Props(new DataStream), "FutOrderBookDataStream")
 
       // Listener
-      val listenerConfig = Replication("FORTS_FUTORDERBOOK_REPL", new File("cgate/scheme/Orderbook.ini"), "CustReplScheme")
+      val listenerConfig = Replication("FORTS_FUTORDERBOOK_REPL", new File("cgate/scheme/orderbook.ini"), "CustReplScheme")
       val underlyingListener = new CGListener(underlyingConnection, listenerConfig(), new DataStreamSubscriber(FutOrderBookDataStream))
       val listener = system.actorOf(Props(new Listener(underlyingListener)), "Listener")
 
@@ -74,14 +79,14 @@ class FutOrderbookIntegrationSpec extends TestKit(ActorSystem("FutOrderBookInteg
 
 
       FutOrderBookDataStream ! SubscribeTransitionCallBack(system.actorOf(Props(new Actor {
-        protected def receive = {
+        def receive = {
           case e => log.info("DATA STREAM STATE = " + e)
         }
       })))
 
       // On connection Activated open listeners etc
       connection ! SubscribeTransitionCallBack(system.actorOf(Props(new Actor {
-        protected def receive = {
+        def receive = {
           case Transition(_, _, Active) =>
             // Open Listener in Combined mode
             listener ! Listener.Open(ReplicationParams(ReplicationMode.Snapshot))
