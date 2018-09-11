@@ -2,14 +2,14 @@ package com.ergodicity.cgate
 
 import org.mockito.Mockito._
 import org.mockito.Matchers._
-import akka.actor.{FSM, ActorSystem}
-import org.scalatest.{BeforeAndAfterAll, WordSpec}
+import akka.actor.{ActorSystem, FSM}
+import org.scalatest.{BeforeAndAfterAll, WordSpec, WordSpecLike}
 import akka.event.Logging
 import akka.testkit.{ImplicitSender, TestFSMRef, TestKit}
-import ru.micexrts.cgate.{State => CGState, Connection => CGConnection}
+import ru.micexrts.cgate.{Connection => CGConnection, State => CGState}
 import com.ergodicity.cgate.Connection._
 
-class ConnectionSpec extends TestKit(ActorSystem("ConnectionSpec", AkkaConfigurations.ConfigWithDetailedLogging)) with WordSpec with BeforeAndAfterAll with ImplicitSender {
+class ConnectionSpec extends TestKit(ActorSystem("ConnectionSpec", AkkaConfigurations.ConfigWithDetailedLogging)) with WordSpecLike with BeforeAndAfterAll with ImplicitSender {
   val log = Logging(system, self)
 
   val Host = "host"
@@ -17,13 +17,13 @@ class ConnectionSpec extends TestKit(ActorSystem("ConnectionSpec", AkkaConfigura
   val AppName = "ConnectionSpec"
 
   override def afterAll() {
-    system.shutdown()
+    system.terminate()
   }
 
   "Connection" must {
     "be initialized in Closed state" in {
       val cg = mock(classOf[CGConnection])
-      val connection = TestFSMRef(new Connection(cg, None), "Connection")
+      val connection = TestFSMRef(new Connection(cg, None), "Connection1")
       log.info("State: " + connection.stateName)
       assert(connection.stateName == Closed)
     }
@@ -32,7 +32,7 @@ class ConnectionSpec extends TestKit(ActorSystem("ConnectionSpec", AkkaConfigura
       val cg = mock(classOf[CGConnection])
       when(cg.getState).thenReturn(CGState.OPENING)
 
-      val connection = TestFSMRef(new Connection(cg, None), "Connection")
+      val connection = TestFSMRef(new Connection(cg, None), "Connection2")
       connection ! Open
 
       verify(cg).open(anyString())
@@ -45,7 +45,7 @@ class ConnectionSpec extends TestKit(ActorSystem("ConnectionSpec", AkkaConfigura
       val cg = mock(classOf[CGConnection])
       when(cg.getState).thenReturn(CGState.ACTIVE)
 
-      val connection = TestFSMRef(new Connection(cg, None), "Connection")
+      val connection = TestFSMRef(new Connection(cg, None), "Connection3")
       connection ! Open
 
       verify(cg).open(anyString())
@@ -59,7 +59,7 @@ class ConnectionSpec extends TestKit(ActorSystem("ConnectionSpec", AkkaConfigura
       when(cg.getState).thenReturn(CGState.OPENING)
         .thenReturn(CGState.ACTIVE)
 
-      val connection = TestFSMRef(new Connection(cg, None), "Connection")
+      val connection = TestFSMRef(new Connection(cg, None), "Connection4")
       connection ! Open
 
       connection ! ConnectionState(Active)
@@ -71,7 +71,7 @@ class ConnectionSpec extends TestKit(ActorSystem("ConnectionSpec", AkkaConfigura
       when(cg.getState).thenReturn(CGState.ACTIVE)
         .thenReturn(CGState.ERROR)
 
-      val connection = TestFSMRef(new Connection(cg, None), "Connection")
+      val connection = TestFSMRef(new Connection(cg, None), "Connection5")
       watch(connection)
       connection ! Open
 
@@ -84,7 +84,7 @@ class ConnectionSpec extends TestKit(ActorSystem("ConnectionSpec", AkkaConfigura
       val cg = mock(classOf[CGConnection])
       when(cg.getState).thenReturn(CGState.ACTIVE)
 
-      val connection = TestFSMRef(new Connection(cg, None), "Connection")
+      val connection = TestFSMRef(new Connection(cg, None), "Connection6")
       watch(connection)
       connection ! Close
       assert(connection.stateName == Closed)
@@ -94,7 +94,7 @@ class ConnectionSpec extends TestKit(ActorSystem("ConnectionSpec", AkkaConfigura
       val cg = mock(classOf[CGConnection])
       when(cg.getState).thenReturn(CGState.OPENING)
 
-      val connection = TestFSMRef(new Connection(cg, None), "Connection")
+      val connection = TestFSMRef(new Connection(cg, None), "Connection7")
       connection.setState(Opening)
       watch(connection)
       intercept[ConnectionTimedOut] {

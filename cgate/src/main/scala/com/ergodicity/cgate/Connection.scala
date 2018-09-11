@@ -1,10 +1,12 @@
 package com.ergodicity.cgate
 
-import akka.util.duration._
+import scala.concurrent.duration._
 import akka.actor.FSM.Failure
 import akka.actor.{FSM, Actor}
 import ru.micexrts.cgate.{Connection => CGConnection}
-import akka.util.{Timeout, Duration}
+import akka.util.Timeout
+
+import scala.concurrent.ExecutionContext.Implicits.global
 
 object Connection {
 
@@ -48,7 +50,7 @@ class Connection(protected[cgate] val underlying: CGConnection, updateStateDurat
   implicit val timeout = Timeout(1.second)
 
   private val statusTracker = updateStateDuration.map {duration =>
-    context.system.scheduler.schedule(0 milliseconds, duration) {
+    context.system.scheduler.schedule(FiniteDuration(0, MILLISECONDS), FiniteDuration(duration._1, duration._2)) {
       self ! UpdateState
     }
   }

@@ -1,22 +1,24 @@
 package integration.ergodicity.cgate
 
-import akka.actor.FSM.{Transition, SubscribeTransitionCallBack}
-import akka.actor.{Actor, Props, ActorSystem}
+import akka.actor.FSM.{SubscribeTransitionCallBack, Transition}
+import akka.actor.{Actor, ActorSystem, Props}
 import akka.event.Logging
-import akka.testkit.{TestActorRef, ImplicitSender, TestKit}
-import akka.util.duration._
+import akka.testkit.{ImplicitSender, TestActorRef, TestKit}
+
+import scala.concurrent.duration._
 import com.ergodicity.cgate.Connection.StartMessageProcessing
 import com.ergodicity.cgate.DataStream.SubscribeStreamEvents
 import com.ergodicity.cgate._
 import com.ergodicity.cgate.config.ConnectionConfig.Tcp
 import com.ergodicity.cgate.config.Replication._
-import config.{Replication, CGateConfig}
+import config.{CGateConfig, Replication}
 import java.io.File
 import java.util.concurrent.TimeUnit
-import org.scalatest.{BeforeAndAfterAll, WordSpec}
-import ru.micexrts.cgate.{P2TypeParser, CGate, Connection => CGConnection, Listener => CGListener}
 
-class DataStreamIntegrationSpec extends TestKit(ActorSystem("DataStreamIntegrationSpec", integration.ConfigWithDetailedLogging)) with ImplicitSender with WordSpec with BeforeAndAfterAll {
+import org.scalatest.{BeforeAndAfterAll, WordSpec, WordSpecLike}
+import ru.micexrts.cgate.{CGate, P2TypeParser, Connection => CGConnection, Listener => CGListener}
+
+class DataStreamIntegrationSpec extends TestKit(ActorSystem("DataStreamIntegrationSpec", integration.ConfigWithDetailedLogging)) with ImplicitSender with WordSpecLike with BeforeAndAfterAll {
   val log = Logging(system, self)
 
   val Host = "localhost"
@@ -31,7 +33,7 @@ class DataStreamIntegrationSpec extends TestKit(ActorSystem("DataStreamIntegrati
   }
 
   override def afterAll() {
-    system.shutdown()
+    system.terminate()
     CGate.close()
   }
 
@@ -53,7 +55,7 @@ class DataStreamIntegrationSpec extends TestKit(ActorSystem("DataStreamIntegrati
 
       // On connection Activated open listeners etc
       connection ! SubscribeTransitionCallBack(system.actorOf(Props(new Actor {
-        protected def receive = {
+        def receive = {
           case Transition(_, _, Active) =>
             // Open Listener in Combined mode
             listener ! Listener.Open(ReplicationParams(ReplicationMode.Combined))

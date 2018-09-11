@@ -2,19 +2,20 @@ package integration.ergodicity.cgate
 
 import integration._
 import akka.actor.ActorSystem
-import akka.util.duration._
-import org.scalatest.{BeforeAndAfterAll, WordSpec}
+
+import scala.concurrent.duration._
+import org.scalatest.{BeforeAndAfterAll, WordSpec, WordSpecLike}
 import akka.event.Logging
 import com.ergodicity.cgate._
 import com.ergodicity.cgate.Connection._
 import config.CGateConfig
 import ru.micexrts.cgate.{CGate, Connection => CGConnection}
-import akka.testkit.{TestFSMRef, ImplicitSender, TestKit}
+import akka.testkit.{ImplicitSender, TestFSMRef, TestKit}
 import com.ergodicity.cgate.config.ConnectionConfig.Tcp
 import java.io.File
 
 
-class ConnectionIntegrationSpec extends TestKit(ActorSystem("ConnectionIntegrationSpec", ConfigWithDetailedLogging)) with ImplicitSender with WordSpec with BeforeAndAfterAll {
+class ConnectionIntegrationSpec extends TestKit(ActorSystem("ConnectionIntegrationSpec", ConfigWithDetailedLogging)) with ImplicitSender with WordSpecLike with BeforeAndAfterAll {
   val log = Logging(system, self)
 
   override def beforeAll() {
@@ -23,7 +24,7 @@ class ConnectionIntegrationSpec extends TestKit(ActorSystem("ConnectionIntegrati
   }
 
   override def afterAll() {
-    system.shutdown()
+    system.terminate()
     CGate.close()
   }
 
