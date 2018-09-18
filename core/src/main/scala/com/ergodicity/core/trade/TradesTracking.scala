@@ -50,7 +50,7 @@ class TradesTracking(FutTrade: ActorRef, OptTrade: ActorRef) extends Actor with 
 
     case Event(trade@Trade(_, _, isin, _, _, _, _), assigned) =>
       val security = assigned ? isin
-      security.flatMap(subscribers.get(_)) foreach (_.foreach(_ ! trade))
+      security.flatMap(subscribers.get _) foreach (_.foreach(_ ! trade))
       stay()
 
     case Event(AssignedContents(assigned), AssignedContents(old)) =>
@@ -75,8 +75,8 @@ class FutTradesDispatcher(tradesTracking: ActorRef, stream: ActorRef) extends Ac
 
     case _: ClearDeleted =>
 
-    case StreamData(FutTrade.deal.TABLE_INDEX, data) =>
-      val record = implicitly[Reads[FutTrade.deal]] apply data
+    case StreamData(FutTrade.user_deal.TABLE_INDEX, data) =>
+      val record = implicitly[Reads[FutTrade.user_deal]] apply data
       if (record.get_replAct() == 0) {
         val tradeId = record.get_id_deal()
         val sessionId = record.get_sess_id()
@@ -104,8 +104,8 @@ class OptTradesDispatcher(tradesTracking: ActorRef, stream: ActorRef) extends Ac
 
     case _: ClearDeleted =>
 
-    case StreamData(OptTrade.deal.TABLE_INDEX, data) =>
-      val record = implicitly[Reads[OptTrade.deal]] apply data
+    case StreamData(OptTrade.user_deal.TABLE_INDEX, data) =>
+      val record = implicitly[Reads[OptTrade.user_deal]] apply data
       if (record.get_replAct() == 0) {
         val tradeId = record.get_id_deal()
         val sessionId = record.get_sess_id()

@@ -2,7 +2,7 @@ package com.ergodicity.core
 
 import akka.actor._
 import akka.util
-import akka.util.duration._
+import scala.concurrent.duration._
 import collection.mutable
 import com.ergodicity.cgate.DataStream.SubscribeStreamEvents
 import com.ergodicity.cgate.StreamEvent.ClearDeleted
@@ -13,7 +13,6 @@ import com.ergodicity.cgate.scheme.{OptInfo, FutInfo}
 import com.ergodicity.cgate.{Reads, WhenUnhandled, SysEvent}
 import com.ergodicity.core.SessionsTracking._
 import com.ergodicity.core.session.Implicits._
-import scala.Some
 import session._
 import session.InstrumentParameters.{OptionParameters, FutureParameters}
 import com.ergodicity.cgate.scheme.FutInfo.fut_sess_contents

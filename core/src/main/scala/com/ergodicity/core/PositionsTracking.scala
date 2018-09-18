@@ -4,17 +4,15 @@ import akka.actor._
 import collection.mutable
 import com.ergodicity.cgate.scheme.Pos
 import com.ergodicity.cgate.DataStream._
-import akka.dispatch.Future
-import akka.util.duration._
+import scala.concurrent.Future
+import scala.concurrent.duration._
 import com.ergodicity.cgate.{Reads, WhenUnhandled}
 import position.{Position, PositionDynamics, PositionActor}
 import position.PositionActor.{GetCurrentPosition, CurrentPosition, UpdatePosition}
 import akka.pattern.ask
-import akka.pattern.pipe
 import akka.util.Timeout
 import session.InstrumentNotAssigned
 import session.SessionActor.AssignedContents
-import scala.Some
 import com.ergodicity.cgate.StreamEvent.{StreamData, ClearDeleted, TnCommit, TnBegin}
 import com.ergodicity.core.PositionsTracking.{PositionDiscarded, PositionUpdated}
 import com.ergodicity.cgate.Protocol._
@@ -53,7 +51,8 @@ class PositionsTracking(PosStream: ActorRef) extends Actor with FSM[PositionsTra
   import PositionsTrackingState._
 
   implicit val timeout = Timeout(1.second)
-  implicit val executionContext = context.system
+  implicit val system = context.system
+  implicit val ec = system.dispatcher
 
   val positions = mutable.Map[Security, ActorRef]()
   var subscribers = Set[ActorRef]()
@@ -65,7 +64,7 @@ class PositionsTracking(PosStream: ActorRef) extends Actor with FSM[PositionsTra
   when(Tracking) {
     case Event(GetPositions, _) =>
       val currentPositions = Future.sequence(positions.values.map(ref => (ref ? GetCurrentPosition).mapTo[CurrentPosition]))
-      currentPositions.map(_.map(_.tuple).toMap) map (Positions(_)) pipeTo sender
+      currentPositions.map(_.map(_.tuple).toMap).map(Positions) pipeTo (sender)
       stay()
 
     case Event(GetTrackedPosition(security), _) =>

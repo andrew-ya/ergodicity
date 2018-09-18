@@ -14,7 +14,7 @@ case object Flat extends Direction
 object Position {
   def flat = Position(0)
 
-  implicit val PositionSemigroup: scalaz.Semigroup[Position] = semigroup((a, b) => Position(a.pos + b.pos))
+  implicit val PositionSemigroup: scalaz.Semigroup[Position] = Semigroup((a, b) => Position(a.pos + b.pos))
 }
 
 case class Position(pos: Int) {

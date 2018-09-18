@@ -1,7 +1,7 @@
 package com.ergodicity.core.session
 
 import akka.actor.{ActorRef, FSM, LoggingFSM, Actor}
-import akka.util.duration._
+import scala.concurrent.duration._
 import com.ergodicity.core.{OptionContract, FutureContract, Security}
 import com.ergodicity.core.session.InstrumentParameters.{OptionParameters, FutureParameters}
 

@@ -36,6 +36,9 @@ object OrdersSnapshotActor {
 
 class OrdersSnapshotActor(OrderBookStream: ActorRef) extends Actor with LoggingFSM[SnapshotState, (Option[Long], Option[DateTime], Map[Long, (Order, Seq[Fill])])] {
 
+  implicit val system = context.system
+  implicit val ec = system.dispatcher
+
   override def preStart() {
     OrderBookStream ! SubscribeStreamEvents(self)
     OrderBookStream ! SubscribeTransitionCallBack(self)
@@ -57,7 +60,8 @@ class OrdersSnapshotActor(OrderBookStream: ActorRef) extends Actor with LoggingF
   private def toAction(record: OrdBook.orders): Seq[Fill] = record.get_action() match {
     case 1 => Nil
     case 2 if (record.get_amount_rest() == record.get_init_amount() - record.get_amount()) =>
-      Fill(record.get_amount(), record.get_amount_rest(), Some(record.get_id_deal(), record.get_deal_price())) :: Nil
+//      todo: Check replace get_id_deal() and  get_deal_price() in old docs
+      Fill(record.get_amount(), record.get_amount_rest(), Some(record.get_id_ord(), record.get_deal_price())) :: Nil
     case 2 =>
       val amount = record.get_init_amount() - record.get_amount_rest() - record.get_amount()
       val rest = record.get_amount_rest() + record.get_amount()

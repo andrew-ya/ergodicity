@@ -2,7 +2,7 @@ package com.ergodicity.core.order
 
 import akka.actor._
 import akka.util
-import akka.util.duration._
+import scala.concurrent.duration._
 import collection.mutable
 import com.ergodicity.cgate.DataStream.SubscribeStreamEvents
 import com.ergodicity.cgate.StreamEvent._

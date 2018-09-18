@@ -1,18 +1,19 @@
 package com.ergodicity.core.broker
 
-import akka.actor.{Status, FSM, ActorRef, Actor}
-import akka.util.duration._
-import ru.micexrts.cgate.{Publisher => CGPublisher, PublishFlag}
+import akka.actor.{Actor, ActorRef, FSM, Status}
+
+import scala.concurrent.duration._
+import ru.micexrts.cgate.{PublishFlag, Publisher => CGPublisher}
 import com.ergodicity.cgate._
-import akka.util.Duration
 import akka.actor.FSM.Failure
-import scala.Some
-import com.ergodicity.core.{Market, OrderDirection, OrderType, Isin}
+import com.ergodicity.core.{Isin, Market, OrderDirection, OrderType}
 import com.ergodicity.core.broker.Protocol.Protocol
-import com.ergodicity.core.broker.Action.{Cancel, AddOrder}
+import com.ergodicity.core.broker.Action.{AddOrder, Cancel}
 import com.ergodicity.core.broker.ReplyEvent.{ReplyData, TimeoutMessage}
 import java.nio.ByteBuffer
+
 import collection.mutable
+import scala.language.postfixOps
 
 protected[broker] case class PublisherState(state: State)
 
@@ -67,13 +68,16 @@ class Broker(underlying: CGPublisher, updateStateDuration: Option[Duration] = So
 
   import Broker._
 
+  implicit val system = context.system
+  implicit val ec = system.dispatcher
+
   val InitialMessageId = 1
 
   val handlers = mutable.Map[Int, Handler]()
 
   private val statusTracker = updateStateDuration.map {
     duration =>
-      context.system.scheduler.schedule(0 milliseconds, duration) {
+      context.system.scheduler.schedule(0 milliseconds, FiniteDuration(duration._1, duration._2)) {
         self ! UpdateState
       }
   }

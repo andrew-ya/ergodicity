@@ -7,7 +7,6 @@ import akka.pattern.pipe
 import akka.util.Timeout
 import java.util.concurrent.TimeUnit
 import com.ergodicity.cgate.scheme.FutInfo
-import scala.Some
 import com.ergodicity.core.{Isin, Security, SessionId, IsinId}
 import collection.immutable
 import com.ergodicity.core.SessionsTracking.{OptSessContents, FutSessContents}
@@ -44,11 +43,11 @@ object SessionActor {
     import scalaz._
     import Scalaz._
 
-    val findByIdMemo = immutableHashMapMemo[IsinId, Option[Security]] {
+    val findByIdMemo = Memo.immutableHashMapMemo[IsinId, Option[Security]] {
       id => contents.find(_.id == id)
     }
 
-    val findByIsinMemo = immutableHashMapMemo[Isin, Option[Security]] {
+    val findByIsinMemo =  Memo.immutableHashMapMemo[Isin, Option[Security]] {
       isin => contents.find(_.isin == isin)
     }
 
@@ -67,6 +66,9 @@ case class SessionActor(session: Session) extends Actor with LoggingFSM[SessionS
 
   import SessionActor._
   import SessionState._
+
+  implicit val system = context.system
+  implicit val ec = system.dispatcher
 
   val intradayClearing = context.actorOf(Props(new IntradayClearing), "IntradayClearing")
 

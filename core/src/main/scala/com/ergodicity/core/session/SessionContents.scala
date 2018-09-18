@@ -2,7 +2,7 @@ package com.ergodicity.core.session
 
 import akka.actor.{ActorLogging, Props, ActorRef, Actor}
 import akka.actor.FSM.{CurrentState, SubscribeTransitionCallBack, Transition}
-import akka.util.duration._
+import scala.concurrent.duration._
 import com.ergodicity.cgate.WhenUnhandled
 import collection.mutable
 import com.ergodicity.core.session.SessionActor.{AssignedContents, GetAssignedContents, GetInstrument}
